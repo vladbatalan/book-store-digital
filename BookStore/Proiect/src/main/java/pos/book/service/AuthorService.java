@@ -1,8 +1,7 @@
 package pos.book.service;
 
 
-import pos.book.pojo.Author;
-import pos.book.pojo.Book;
+import pos.book.model.pojo.erd.Author;
 
 import java.util.List;
 

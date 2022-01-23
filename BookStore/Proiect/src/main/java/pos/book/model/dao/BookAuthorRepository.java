@@ -1,10 +1,9 @@
-package pos.book.dao;
+package pos.book.model.dao;
 
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import pos.book.pojo.Author;
-import pos.book.pojo.BookAuthor;
-import pos.book.pojo.id.BookAuthorId;
+import pos.book.model.pojo.erd.BookAuthor;
+import pos.book.model.pojo.erd.id.BookAuthorId;
 
 import javax.transaction.Transactional;
 import java.util.List;

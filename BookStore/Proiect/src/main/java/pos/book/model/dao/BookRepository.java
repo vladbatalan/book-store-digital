@@ -1,11 +1,9 @@
-package pos.book.dao;
+package pos.book.model.dao;
 
-import org.hibernate.dialect.Ingres9Dialect;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.PagingAndSortingRepository;
-import pos.book.pojo.Book;
+import pos.book.model.pojo.erd.Book;
 
 import java.util.List;
 

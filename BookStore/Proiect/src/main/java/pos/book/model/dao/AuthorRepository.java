@@ -1,9 +1,9 @@
-package pos.book.dao;
+package pos.book.model.dao;
 
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
-import pos.book.pojo.Author;
+import pos.book.model.pojo.erd.Author;
 
 import java.util.List;
 

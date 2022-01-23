@@ -2,22 +2,24 @@ package pos.book.service.impl;
 
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import pos.book.dao.BookAuthorRepository;
-import pos.book.dao.BookRepository;
-import pos.book.pojo.Book;
-import pos.book.pojo.BookAuthor;
+import pos.book.model.dao.BookAuthorRepository;
+import pos.book.model.dao.BookRepository;
+import pos.book.model.pojo.erd.Book;
+import pos.book.model.pojo.erd.BookAuthor;
+import pos.book.model.pojo.exception.HttpResponseException;
 import pos.book.service.BookService;
+import pos.book.utils.PageUtils;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @Service
 public class BookServiceImpl implements BookService {
 
-    private BookRepository bookRepository;
-    private BookAuthorRepository bookAuthorRepository;
+    private final BookRepository bookRepository;
+    private final BookAuthorRepository bookAuthorRepository;
 
     public BookServiceImpl(BookRepository bookRepository, BookAuthorRepository bookAuthorRepository) {
         this.bookRepository = bookRepository;
@@ -25,25 +27,8 @@ public class BookServiceImpl implements BookService {
     }
 
     @Override
-    public List<Book> getAllBooks() {
-        return (List<Book>) bookRepository.findAll();
-    }
-
-    @Override
-    public List<Book> getBooksByCategoryOrYear(String category, Integer publishingYear) {
-
-        if (category != null && publishingYear != null)
-            return bookRepository.findByCategoryAndPublishingYear(category, publishingYear);
-        if (category != null)
-            return bookRepository.findByCategory(category);
-        if (publishingYear != null)
-            return bookRepository.findByPublishingYear(publishingYear);
-        return null;
-    }
-
-    @Override
     public List<Book> getAllBooks(Integer page, Integer itemsPerPage) {
-        Pageable pageable = PageRequest.of(page, itemsPerPage);
+        Pageable pageable = PageUtils.getPageOf(page, itemsPerPage);
         return bookRepository.findAll(pageable).getContent();
     }
 
@@ -56,13 +41,17 @@ public class BookServiceImpl implements BookService {
             return bookRepository.findByCategory(category, pageable).getContent();
         if (publishingYear != null)
             return bookRepository.findByPublishingYear(publishingYear, pageable).getContent();
-        return null;
+        return getAllBooks(page, itemsPerPage);
     }
 
     @Override
     public Book getBook(String isbn) {
         Optional<Book> book = bookRepository.findById(isbn);
-        return book.orElse(null);
+
+        if(book.isEmpty())
+            throw new HttpResponseException("Book with isbn does not exist.", HttpStatus.NOT_FOUND);
+
+        return book.get();
     }
 
     @Override
@@ -70,11 +59,10 @@ public class BookServiceImpl implements BookService {
 
         Optional<Book> book = bookRepository.findById(isbn);
         if (book.isPresent()) {
-
             bookRepository.delete(book.get());
             return book.get();
         }
-        return null;
+        throw new HttpResponseException("Book with isbn does not exist.", HttpStatus.NOT_FOUND);
     }
 
     @Override
@@ -83,16 +71,14 @@ public class BookServiceImpl implements BookService {
         Optional<Book> otherBookOptional = bookRepository.findById(book.getIsbn());
 
         // nu exista carte
-        if (otherBookOptional.isPresent()) {
-            return null;
-        }
+        if (otherBookOptional.isPresent())
+            throw new HttpResponseException("Book already exists.", HttpStatus.NOT_ACCEPTABLE);
 
         // se cauta sa nu fie acelasi titlu
         Book otherBook = bookRepository.findByTitle(book.getTitle());
 
-        if (otherBook != null) {
-            return null;
-        }
+        if (otherBook != null)
+            throw new HttpResponseException("A book with this title already exists.", HttpStatus.CONFLICT);
 
         // se adauga cartea
         bookRepository.save(book);
@@ -104,38 +90,33 @@ public class BookServiceImpl implements BookService {
         Optional<Book> otherBookOptional = bookRepository.findById(book.getIsbn());
 
         // Trebuie sa existe cartea
-        if (otherBookOptional.isEmpty()) {
-            return null;
-        }
+        if (otherBookOptional.isEmpty())
+            throw new HttpResponseException("Book with given isbn does not exist.", HttpStatus.NOT_FOUND);
 
-        Book otherBook = otherBookOptional.get();
+        Book toBeChanged = otherBookOptional.get();
 
         // Verifica daca titlul e diferit sa nu mai existe un alt titlu la fel
-        if (otherBook.getTitle() != null && !Objects.equals(book.getTitle(), otherBook.getTitle())) {
+        if (toBeChanged.getTitle() != null && !book.getTitle().equals(toBeChanged.getTitle())) {
             Book sameTitle = bookRepository.findByTitle(book.getTitle());
 
-            // Exista
+            // Exista o carte cu acelasi titlu
             if (sameTitle != null)
-                return null;
+                throw new HttpResponseException("A book with this title already exists.", HttpStatus.CONFLICT);
+
+            toBeChanged.setTitle(book.getTitle());
         }
 
+        if (book.getPublisher() != null && !book.getPublisher().equals(toBeChanged.getPublisher()))
+            toBeChanged.setPublisher(book.getPublisher());
 
-        // Schimbam elementele care sunt diferite
-        if (book.getTitle() != null)
-            otherBook.setTitle(book.getTitle());
+        if (book.getPublishingYear() != null && !book.getPublishingYear().equals(toBeChanged.getPublishingYear()))
+            toBeChanged.setPublishingYear(book.getPublishingYear());
 
-        if (book.getPublisher() != null)
-            otherBook.setPublisher(book.getPublisher());
+        if (book.getCategory() != null && !book.getCategory().equals(toBeChanged.getCategory()))
+            toBeChanged.setCategory(book.getCategory());
 
-        if (book.getPublishingYear() != null)
-            otherBook.setPublishingYear(book.getPublishingYear());
-
-        if (book.getCategory() != null)
-            otherBook.setCategory(book.getCategory());
-
-        // Update
-        bookRepository.save(otherBook);
-        return book;
+        bookRepository.save(toBeChanged);
+        return toBeChanged;
     }
 
     @Override
@@ -151,8 +132,12 @@ public class BookServiceImpl implements BookService {
         BookAuthor bookAuthorExists = bookAuthorRepository.findByIsbnAndIdAuthor(isbn, idAuthor);
 
         // If it doesn't exist
-        if (bookOptional.isEmpty() || bookAuthorExists != null)
-            return null;
+        if (bookOptional.isEmpty())
+            throw new HttpResponseException("Book does not exist.", HttpStatus.NOT_FOUND);
+
+        if(bookAuthorExists != null)
+            throw new HttpResponseException("Book already has this author.", HttpStatus.CONFLICT);
+
 
         Book book = bookOptional.get();
 
@@ -169,13 +154,18 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public long deleteAuthor(String isbn, Integer idAuthor) {
+        Optional<Book> book = bookRepository.findById(isbn);
+
+        if(book.isEmpty())
+            throw new HttpResponseException("Book does not exist.", HttpStatus.NOT_FOUND);
+
         long deleted = bookAuthorRepository.deleteByIsbnAndIdAuthor(isbn, idAuthor);
 
-        // Change the indexes of remaining authors
-        if (deleted != 0) {
-            authorReindex(isbn);
-        }
+        if(deleted == 0)
+            throw new HttpResponseException("Book has no author with given id.", HttpStatus.NOT_FOUND);
 
+        // Change the indexes of remaining authors
+        authorReindex(isbn);
         return deleted;
     }
 

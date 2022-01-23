@@ -1,8 +1,8 @@
 package pos.book.service.impl;
 
 import org.springframework.stereotype.Service;
-import pos.book.dao.AuthorRepository;
-import pos.book.pojo.Author;
+import pos.book.model.dao.AuthorRepository;
+import pos.book.model.pojo.erd.Author;
 import pos.book.service.AuthorService;
 
 import java.util.List;

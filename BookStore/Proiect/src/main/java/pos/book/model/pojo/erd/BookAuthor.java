@@ -1,8 +1,8 @@
-package pos.book.pojo;
+package pos.book.model.pojo.erd;
 
 import lombok.Data;
 import org.springframework.hateoas.RepresentationModel;
-import pos.book.pojo.id.BookAuthorId;
+import pos.book.model.pojo.erd.id.BookAuthorId;
 
 import javax.persistence.*;
 import java.io.Serializable;

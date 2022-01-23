@@ -1,20 +1,15 @@
 package pos.book.service;
 
 
-import pos.book.pojo.Author;
-import pos.book.pojo.Book;
-import pos.book.pojo.BookAuthor;
+import pos.book.model.pojo.erd.Book;
+import pos.book.model.pojo.erd.BookAuthor;
 
 import java.util.List;
 
 public interface BookService {
 
-    List<Book> getAllBooks();
-    List<Book> getBooksByCategoryOrYear(String category, Integer publishingYear);
-
-
-    List<Book> getAllBooks(Integer page, Integer itemsPerPage);
     List<Book> getBooksByCategoryOrYear(String category, Integer publishingYear, Integer page, Integer itemsPerPage);
+    List<Book> getAllBooks(Integer page, Integer itemsPerPage);
 
     Book getBook(String isbn);
     Book deleteBook(String isbn);

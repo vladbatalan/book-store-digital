@@ -39,6 +39,8 @@ public class ApiController {
     private WebClient.Builder webClientBuilder;
 
     private final Integer BACKEND_PORT = 4300;
+    private final Integer BOOK_COLLECTION_PORT = 8081;
+    private final Integer COMMAND_PORT = 8082;
 
     @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody

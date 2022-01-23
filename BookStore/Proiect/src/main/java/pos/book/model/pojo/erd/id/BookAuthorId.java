@@ -1,4 +1,4 @@
-package pos.book.pojo.id;
+package pos.book.model.pojo.erd.id;
 
 import lombok.Data;
 

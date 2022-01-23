@@ -1,4 +1,4 @@
-package pos.book.pojo;
+package pos.book.model.pojo.erd;
 
 import lombok.Data;
 import org.springframework.hateoas.RepresentationModel;
