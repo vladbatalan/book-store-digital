@@ -1,0 +1,45 @@
+plugins {
+    id 'org.springframework.boot' version '2.5.6'
+    id 'io.spring.dependency-management' version '1.0.11.RELEASE'
+    id 'java'
+}
+
+group = 'paw.command'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '11'
+
+configurations {
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb:2.5.6'
+    implementation 'org.springframework.boot:spring-boot-starter-data-mongodb-reactive:2.5.6'
+    implementation 'org.springframework.boot:spring-boot-starter-data-rest:2.5.6'
+    implementation 'org.springframework.boot:spring-boot-starter-hateoas:2.5.6'
+    implementation 'org.springframework.boot:spring-boot-starter-web:2.5.6'
+    implementation 'org.springframework.boot:spring-boot-starter-web-services:2.5.6'
+    implementation 'org.springframework.boot:spring-boot-starter-webflux:2.5.6'
+    implementation 'org.springframework.session:spring-session-core:2.5.3'
+    compileOnly 'org.projectlombok:lombok:1.18.22'
+    developmentOnly 'org.springframework.boot:spring-boot-devtools:2.5.6'
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor:2.5.6'
+    annotationProcessor 'org.projectlombok:lombok:1.18.22'
+    testImplementation 'org.springframework.boot:spring-boot-starter-test:2.5.6'
+    testImplementation 'io.projectreactor:reactor-test:3.4.12'
+
+    // https://mvnrepository.com/artifact/org.springdoc/springdoc-openapi-ui
+    implementation group: 'org.springdoc', name: 'springdoc-openapi-ui', version: '1.5.12'
+    implementation 'org.springframework.hateoas:spring-hateoas:1.4.0'
+    implementation 'org.springframework.boot:spring-boot-starter-hateoas:2.6.0'
+}
+
+test {
+    useJUnitPlatform()
+}
