@@ -1,7 +1,7 @@
-package paw.command.command.dao;
+package paw.command.command.model.dao;
 
 import org.springframework.data.mongodb.repository.MongoRepository;
-import paw.command.command.pojo.raw.Order;
+import paw.command.command.model.pojo.erd.Order;
 
 import java.util.Optional;
 

@@ -1,4 +1,4 @@
-package paw.command.command.pojo.raw;
+package paw.command.command.model.pojo.dto;
 
 import lombok.Data;
 

@@ -1,15 +1,18 @@
 package paw.command.command.services.impl;
 
-import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.MediaType;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import paw.command.command.model.exception.HttpResponseException;
+import paw.command.command.model.pojo.dto.Book;
+import paw.command.command.model.pojo.dto.BookMinimal;
 import paw.command.command.services.RestService;
-import paw.command.command.services.exceptions.HttpException;
-import reactor.core.publisher.Mono;
 
-import java.util.stream.Collectors;
+import java.net.ConnectException;
 
 @Service
 public class RestServiceImpl implements RestService {
@@ -18,28 +21,44 @@ public class RestServiceImpl implements RestService {
 
     private final String abcServiceUrl = "http://localhost:8081/api/bookcollection";
 
+    private final ObjectMapper objectMapper;
+
     public RestServiceImpl(WebClient.Builder webClientBuilder) {
         this.webClientBuilder = webClientBuilder;
+
+        //create ObjectMapper instance
+        objectMapper = new ObjectMapper();
     }
 
     @Override
-    public String bookExists(String isbn) {
+    public BookMinimal bookExists(String isbn) {
+        return getBookMinimal(isbn);
+    }
 
+    private BookMinimal getBookMinimal(String isbn){
         // Create url for get action
         String url = abcServiceUrl + "/books/{ISBN}";
-        String bookExists;
+
         try {
-            bookExists = webClientBuilder.build()
+            // Create the web client
+            String bookExists = webClientBuilder.build()
                     .get()
                     .uri(url, isbn)
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
-        }
-        catch(RuntimeException exception){
-            return null;
-        }
+            // System.out.println(bookExists);
 
-        return bookExists;
+            return new BookMinimal(objectMapper.readValue(bookExists, Book.class));
+        } catch (WebClientResponseException e){
+            if(e.getStatusCode().equals(HttpStatus.NOT_FOUND))
+                return null;
+            throw new HttpResponseException(e.getMessage(),
+                    e.getStatusCode());
+        } catch (JsonProcessingException e) {
+            throw new HttpResponseException("Wrong object format received from BookCollection.",
+                    HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
+
 }

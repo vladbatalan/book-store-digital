@@ -5,17 +5,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import paw.command.command.pojo.raw.Book;
-import paw.command.command.pojo.request.OrderRequest;
-import paw.command.command.pojo.raw.BookMinimal;
-import paw.command.command.pojo.raw.Order;
+import paw.command.command.model.exception.HttpResponseException;
+import paw.command.command.model.pojo.dto.OrderRequest;
+import paw.command.command.model.pojo.dto.BookMinimal;
+import paw.command.command.model.pojo.erd.Helper;
+import paw.command.command.model.pojo.erd.Order;
+import paw.command.command.services.OrderManagerService;
 import paw.command.command.services.OrderService;
 import paw.command.command.services.RestService;
-import paw.command.command.services.exceptions.HttpException;
 
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
+
+import static org.springframework.http.ResponseEntity.ok;
+import static org.springframework.http.ResponseEntity.status;
 
 @Controller
 @RequestMapping(path = "/api/orders")
@@ -25,63 +28,42 @@ public class OrderController {
     private OrderService orderService;
 
     @Autowired
-    private RestService restService;
+    private OrderManagerService orderManagerService;
 
-//    @GetMapping(path = "")
-//    public @ResponseBody
-//    ResponseEntity<List<Order>> getAllOrders() {
-//        List<Order> orders = orderService.getAllOrders();
-//        return new ResponseEntity<>(orders, HttpStatus.OK);
-//    }
+    @Autowired
+    private RestService restService;
 
     @GetMapping(path = "")
     public @ResponseBody
-    ResponseEntity<List<Order>> getAllOrdersByClientId(@RequestParam String clientId) {
+    ResponseEntity<?> getAllOrders(
+            @RequestParam(name = "client_id", required = false) String clientId
+    ) {
+        try {
+            if (clientId != null)
+                return ok(orderService.getAllOrdersOfClient(clientId));
 
-        List<Order> commands = orderService.getAllOrdersOfClient(clientId);
-        return ResponseEntity.ok(commands);
+            return ok(orderService.getAllOrders());
+        }
+        catch (HttpResponseException e){
+            return status(e.getStatus()).body(e.getMessage());
+        }
     }
 
     @PostMapping(path = "")
     public @ResponseBody
-    ResponseEntity<Order> addOrder(
+    ResponseEntity<?> addOrder(
             @RequestParam String clientId,
             @RequestBody OrderRequest orderRequest
     ) {
+        try {
+            // Add the order to database
+            Order result = orderManagerService.addOrderToClient(clientId, orderRequest);
 
-        //TODO: Validate the books
-        boolean isOrderValid = true;
-        for(BookMinimal bookRequest : orderRequest.getItems()){
-
-            // Get book from book service
-            String bookExists = restService.bookExists(bookRequest.getIsbn());
-            if(bookExists == null){
-                isOrderValid = false;
-            }
-            //TODO: Validate quantity
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
         }
-
-        // If it is valid only store
-        if(!isOrderValid){
-            return ResponseEntity.status(HttpStatus.NOT_ACCEPTABLE).body(null);
+        catch (HttpResponseException e){
+            return status(e.getStatus()).body(e.getMessage());
         }
-
-        // Create the order
-        Order order = new Order();
-
-        // Set the date to current time
-        order.setDate(new Date(System.currentTimeMillis()));
-
-        // Order set Items
-        order.setItems(orderRequest.getItems());
-
-        // Order set status
-        order.setStatus("placed");
-
-        // Add the date to database
-        Order result = orderService.addOrderToClient(order, clientId);
-
-        return ResponseEntity.status(HttpStatus.CREATED).body(result);
     }
 
     @DeleteMapping(path = "/{ORDER_ID}")

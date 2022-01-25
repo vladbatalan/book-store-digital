@@ -1,4 +1,4 @@
-package paw.command.command.dao;
+package paw.command.command.model.dao;
 
 public class ClientRepositoryImpl implements ClientRepositoryCustom{
 

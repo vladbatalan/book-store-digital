@@ -1,7 +1,8 @@
 package paw.command.command.services;
 
-import paw.command.command.services.exceptions.HttpException;
+import paw.command.command.model.pojo.dto.Book;
+import paw.command.command.model.pojo.dto.BookMinimal;
 
 public interface RestService {
-    String bookExists(String isbn);
+    BookMinimal bookExists(String isbn);
 }

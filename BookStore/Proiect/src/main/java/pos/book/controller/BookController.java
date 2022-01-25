@@ -19,14 +19,12 @@ import pos.book.utils.HateosUtils;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
 
 
 @Controller
-@CrossOrigin(maxAge = 3500, origins = "http://localhost:3000")
+@CrossOrigin(maxAge = 3500, origins = {"http://localhost:3000", "http://localhost:8082"})
 @RequestMapping(
         path = "/api/bookcollection/books"
 )

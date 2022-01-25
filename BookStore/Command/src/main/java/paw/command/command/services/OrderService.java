@@ -1,7 +1,7 @@
 package paw.command.command.services;
 
-import paw.command.command.pojo.raw.BookMinimal;
-import paw.command.command.pojo.raw.Order;
+import paw.command.command.model.pojo.dto.BookMinimal;
+import paw.command.command.model.pojo.erd.Order;
 
 import java.util.List;
 
