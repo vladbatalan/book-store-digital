@@ -22,4 +22,8 @@ public interface BookAuthorRepository extends CrudRepository<BookAuthor, BookAut
     @Transactional
     long deleteAllByIsbn(String isbn);
 
+
+    @Transactional
+    long deleteAllByIdAuthor(Integer idAuthor);
+
 }

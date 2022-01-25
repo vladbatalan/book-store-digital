@@ -1,19 +1,18 @@
 package pos.book.controller;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import pos.book.model.pojo.erd.Author;
+import pos.book.model.pojo.exception.HttpResponseException;
 import pos.book.service.AuthorService;
+import pos.book.utils.HateosUtils;
 
 import java.util.List;
 import java.util.Objects;
 
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.methodOn;
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
 
@@ -25,22 +24,26 @@ public class AuthorController {
     @Autowired
     private AuthorService authorService;
 
-    /*
-    Get an author from DB.
-    */
+    /**
+     * Method responsible for getting an author from db
+     *
+     * @param id the id of the author
+     * @return An author
+     */
     @GetMapping(path = "{ID}")
     public @ResponseBody
-    ResponseEntity<Author> getAuthor(@PathVariable("ID") Integer id) {
-        Author author = authorService.getAuthor(id);
-        if (author == null)
-            return status(HttpStatus.NOT_FOUND).body(null);
+    ResponseEntity<?> getAuthor(@PathVariable("ID") Integer id) {
+        try {
+            Author author = authorService.getAuthor(id);
 
-        // Adds the Hateos Link to Author
-        Link selfLink = linkTo(methodOn(AuthorController.class)
-                .getAuthor(author.getIdAuthor())).withSelfRel();
-        author.add(selfLink);
+            // Adds the Hateos Link to Author
+            HateosUtils.appendLinksToAuthor(author);
 
-        return new ResponseEntity<>(author, HttpStatus.OK);
+            return ok(author);
+
+        } catch (HttpResponseException e) {
+            return status(e.getStatus()).body(e.getMessage());
+        }
     }
 
     /*
@@ -49,19 +52,20 @@ public class AuthorController {
     @PostMapping(path = "")
     public @ResponseBody
     ResponseEntity<Object> addNewAuthor(@RequestBody Author author) {
-        Author createdAuthor = authorService.addAuthor(author);
+        try {
+            Author createdAuthor = authorService.addAuthor(author);
 
-        if (createdAuthor != null) {
-            // Adds the Hateos Link to Author
-            Link selfLink = linkTo(methodOn(AuthorController.class)
-                    .getAuthor(createdAuthor.getIdAuthor())).withSelfRel();
-            createdAuthor.add(selfLink);
+            if (createdAuthor != null) {
+                // Adds the Hateos Link to Author
+                HateosUtils.appendLinksToAuthor(createdAuthor);
+            }
+
+            return createdAuthor == null ?
+                    status(HttpStatus.CONFLICT).body(null) :
+                    status(HttpStatus.CREATED).body(createdAuthor);
+        } catch (HttpResponseException e) {
+            return status(e.getStatus()).body(e.getMessage());
         }
-
-        return createdAuthor == null ?
-                status(HttpStatus.CONFLICT).body(null) :
-                status(HttpStatus.CREATED).body(createdAuthor);
-
     }
 
     /*
@@ -69,29 +73,28 @@ public class AuthorController {
      */
     @GetMapping(path = "")
     public @ResponseBody
-    ResponseEntity<Iterable<Author>> getAllAuthors(
+    ResponseEntity<?> getAllAuthors(
             @RequestParam(required = false) String name,
             @RequestParam(required = false, defaultValue = "") String match
     ) {
+        try {
+            // This returns a JSON or XML with the users
+            List<Author> authorList;
 
-        // This returns a JSON or XML with the users
-        List<Author> authorList;
+            if (name == null) authorList = authorService.getAllAuthors();
+            else if (Objects.equals(match, "exact")) authorList = authorService.getAuthorByName(name);
+            else authorList = authorService.getAuthorByNameLike(name);
 
-        if (name == null) authorList = authorService.getAllAuthors();
-        else if (Objects.equals(match, "exact")) authorList = authorService.getAuthorByName(name);
-        else authorList = authorService.getAuthorByNameLike(name);
+            for (Author author : authorList) {
 
-        for (Author author : authorList) {
+                // Adds the Hateos Link to Author
+                HateosUtils.appendLinksToAuthor(author);
+            }
 
-            // Adds the Hateos Link to Author
-            Link selfLink = linkTo(methodOn(AuthorController.class)
-                    .getAuthor(author.getIdAuthor())).withSelfRel();
-            author.add(selfLink);
+            return ok().body(authorList);
+        } catch (HttpResponseException e) {
+            return status(e.getStatus()).body(e.getMessage());
         }
-
-        return authorList.isEmpty() ?
-                status(HttpStatus.NOT_FOUND).body(null) :
-                ResponseEntity.ok().body(authorList);
     }
 
     /*
@@ -99,37 +102,36 @@ public class AuthorController {
      */
     @PutMapping(path = "/")
     public @ResponseBody
-    ResponseEntity<Author> updateAuthors(
+    ResponseEntity<?> updateAuthors(
             @RequestBody Author author
     ) {
-        Author updatedAuthor = authorService.updateAuthor(author);
+        try {
+            Author updatedAuthor = authorService.updateAuthor(author);
 
-        HttpStatus status = updatedAuthor == null ?
-                HttpStatus.CONFLICT :
-                HttpStatus.NO_CONTENT;
+            HateosUtils.appendLinksToAuthor(updatedAuthor);
 
-        // Adds the Hateos Link to Author
-        if(updatedAuthor != null) {
-            Link selfLink = linkTo(methodOn(AuthorController.class)
-                    .getAuthor(updatedAuthor.getIdAuthor())).withSelfRel();
-            updatedAuthor.add(selfLink);
+            return ok().body(updatedAuthor);
+
+        } catch (HttpResponseException e) {
+            return status(e.getStatus()).body(e.getMessage());
         }
-
-        return status(status).body(updatedAuthor);
     }
 
-    /*
-      Delete an author from DB.
-    */
+    /**
+     * Method responsible for deleting an author
+     *
+     * @param id the id of the author
+     * @return The deleted author
+     */
     @DeleteMapping(path = "{ID}")
     public @ResponseBody
-    ResponseEntity<Author> deleteBook(@PathVariable("ID") Integer id) {
-
-        Author deleteBook = authorService.deleteAuthor(id);
-        return deleteBook == null ?
-                status(HttpStatus.NOT_FOUND).body(null) :
-                ok().body(deleteBook);
-
+    ResponseEntity<?> deleteBook(@PathVariable("ID") Integer id) {
+        try {
+            Author deleteBook = authorService.deleteAuthor(id);
+            return ok().body(deleteBook);
+        } catch (HttpResponseException e) {
+            return status(e.getStatus()).body(e.getMessage());
+        }
     }
 
 

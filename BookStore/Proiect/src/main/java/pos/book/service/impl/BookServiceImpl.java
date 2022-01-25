@@ -34,14 +34,14 @@ public class BookServiceImpl implements BookService {
 
     @Override
     public List<Book> getBooksByCategoryOrYear(String category, Integer publishingYear, Integer page, Integer itemsPerPage) {
-        Pageable pageable = PageRequest.of(page, itemsPerPage);
+        Pageable pageable = PageUtils.getPageOf(page, itemsPerPage);
         if (category != null && publishingYear != null)
             return bookRepository.findByCategoryAndPublishingYear(category, publishingYear, pageable).getContent();
         if (category != null)
             return bookRepository.findByCategory(category, pageable).getContent();
         if (publishingYear != null)
             return bookRepository.findByPublishingYear(publishingYear, pageable).getContent();
-        return getAllBooks(page, itemsPerPage);
+        return bookRepository.findAll(pageable).getContent();
     }
 
     @Override
@@ -114,6 +114,14 @@ public class BookServiceImpl implements BookService {
 
         if (book.getCategory() != null && !book.getCategory().equals(toBeChanged.getCategory()))
             toBeChanged.setCategory(book.getCategory());
+
+        if(book.getQuantity() != null) {
+            // Check positive quantity
+            if(book.getQuantity() < 0)
+                throw new HttpResponseException("Quantity must be a positive number.", HttpStatus.NOT_ACCEPTABLE);
+
+            toBeChanged.setQuantity(book.getQuantity());
+        }
 
         bookRepository.save(toBeChanged);
         return toBeChanged;

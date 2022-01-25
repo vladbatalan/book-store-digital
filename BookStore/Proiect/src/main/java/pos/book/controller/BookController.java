@@ -118,7 +118,7 @@ public class BookController {
     @GetMapping(path = "")
     public @ResponseBody
     ResponseEntity<?> getAllBooks(
-            @RequestParam(required = false, defaultValue = "") String genre,
+            @RequestParam(required = false) String genre,
             @RequestParam(required = false) Integer year,
             @RequestParam(required = false) Integer page,
             @RequestParam(
