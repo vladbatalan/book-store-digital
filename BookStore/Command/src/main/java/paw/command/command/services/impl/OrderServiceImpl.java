@@ -10,16 +10,19 @@ import paw.command.command.model.pojo.erd.Helper;
 import paw.command.command.model.pojo.erd.Order;
 import paw.command.command.services.OrderService;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 public class OrderServiceImpl implements OrderService {
 
     private final ClientRepository clientRepository;
     private final HelperRepository helperRepository;
+    private final String[] ALLOWED_ORDER_STATUSES = new String[]{
+            "initializata",
+            "activa",
+            "finalizata"
+    };
 
 
     public OrderServiceImpl(ClientRepository orderRepository, HelperRepository helperRepository) {
@@ -47,6 +50,43 @@ public class OrderServiceImpl implements OrderService {
     public List<Order> getAllOrdersOfClient(String clientId) {
         clientRepository.setCollectionName(clientId);
         return clientRepository.findAll();
+    }
+
+    @Override
+    public Order getOrderById(String orderId) {
+        // Get helper all inserts
+        List<Helper> helper = helperRepository.findAll();
+
+        // Search for client that has order
+        for(Helper clientHelper : helper){
+            if(clientHelper.getOrderList().contains(orderId))
+            {
+                // Found the order
+                // Get the order
+                clientRepository.setCollectionName(clientHelper.getClientId());
+                Optional<Order> found = clientRepository.findById(orderId);
+
+                if(found.isEmpty())
+                    throw new HttpResponseException("Item found in helper but not in client collection.",
+                            HttpStatus.INTERNAL_SERVER_ERROR);
+
+                return found.get();
+            }
+        }
+
+        throw new HttpResponseException("Order does not exist.", HttpStatus.NOT_FOUND);
+    }
+
+    @Override
+    public Order getOrderOfClientById(String clientId, String orderId) {
+        clientRepository.setCollectionName(clientId);
+        // Search the order
+        Optional<Order> found = clientRepository.findById(orderId);
+
+        if(found.isEmpty())
+            throw new HttpResponseException("Order does not exist.", HttpStatus.NOT_FOUND);
+
+        return found.get();
     }
 
     @Override
@@ -123,14 +163,29 @@ public class OrderServiceImpl implements OrderService {
 
 
     @Override
-    public Order updateOrder(Order order) {
-        Optional<Order> toBeUpdated = clientRepository.findById(order.getOrderId());
+    public Order updateOrder(Order order, String clientId) {
 
-        if (toBeUpdated.isEmpty())
+        Order toBeUpdated;
+        if(clientId == null)
+            // Get the order by the id
+            toBeUpdated = getOrderById(order.getOrderId());
+        else
+            toBeUpdated = getOrderOfClientById(clientId, order.getOrderId());
+
+        if (toBeUpdated == null)
             throw new HttpResponseException("Order does not exist.", HttpStatus.NOT_FOUND);
 
-        //TODO: Validate order
+        // Check the status
+        if(!order.getStatus().equals(toBeUpdated.getStatus()))
+        {
+            if(order.getStatus() == null)
+                order.setStatus(toBeUpdated.getStatus());
+            // Check to be in the permited words
+            if(!Arrays.asList(ALLOWED_ORDER_STATUSES).contains(order.getStatus()))
+                throw new HttpResponseException("Invalid status of order.", HttpStatus.NOT_ACCEPTABLE);
+        }
 
+        //TODO: Check the list item
 
         clientRepository.save(order);
         return order;

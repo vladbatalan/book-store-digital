@@ -5,4 +5,5 @@ import paw.command.command.model.pojo.erd.Order;
 
 public interface OrderManagerService {
     Order addOrderToClient(String clientId, OrderRequest order);
+    Order activeOrderToClient(String clientId, String orderId);
 }

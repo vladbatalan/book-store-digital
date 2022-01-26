@@ -1,6 +1,8 @@
 package pos.book.service;
 
 
+import pos.book.model.pojo.dto.BookMinimal;
+import pos.book.model.pojo.dto.BookNoVerbose;
 import pos.book.model.pojo.erd.Book;
 import pos.book.model.pojo.erd.BookAuthor;
 
@@ -21,4 +23,7 @@ public interface BookService {
     BookAuthor addAuthor(String isbn, Integer idAuthor);
     long deleteAuthor(String isbn, Integer idAuthor);
     long deleteAllAuthors(String isbn);
+
+    boolean validateBooksAndUpdateQuantity(List<BookMinimal> bookList);
 }
+

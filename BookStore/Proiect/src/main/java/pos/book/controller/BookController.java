@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
+import pos.book.model.pojo.dto.BookMinimal;
 import pos.book.model.pojo.dto.BookNoVerbose;
 import pos.book.model.pojo.erd.Author;
 import pos.book.model.pojo.erd.Book;
@@ -321,5 +322,18 @@ public class BookController {
             return status(e.getStatus()).body(e.getMessage());
         }
 
+    }
+
+    @PostMapping(path = "/validate")
+    public @ResponseBody
+    ResponseEntity<?> validateAndUpdateBooks(
+            @RequestBody List<BookMinimal> bookList
+    ){
+        try{
+            bookService.validateBooksAndUpdateQuantity(bookList);
+            return ok(bookList);
+        } catch (HttpResponseException e) {
+            return status(e.getStatus()).body(e.getMessage());
+        }
     }
 }

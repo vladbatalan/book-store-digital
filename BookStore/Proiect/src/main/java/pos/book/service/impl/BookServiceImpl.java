@@ -1,11 +1,11 @@
 package pos.book.service.impl;
 
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import pos.book.model.dao.BookAuthorRepository;
 import pos.book.model.dao.BookRepository;
+import pos.book.model.pojo.dto.BookMinimal;
 import pos.book.model.pojo.erd.Book;
 import pos.book.model.pojo.erd.BookAuthor;
 import pos.book.model.pojo.exception.HttpResponseException;
@@ -180,6 +180,56 @@ public class BookServiceImpl implements BookService {
     @Override
     public long deleteAllAuthors(String isbn) {
         return bookAuthorRepository.deleteAllByIsbn(isbn);
+    }
+
+    @Override
+    public boolean validateBooksAndUpdateQuantity(List<BookMinimal> bookList) {
+
+        // Indicates if there are any books with over stock quantity
+        StringBuilder errorString = new StringBuilder();
+
+        for(BookMinimal book : bookList) {
+            // Get book from book service
+            Optional<Book> bookExists = bookRepository.findById(book.getIsbn());
+            if (bookExists.isEmpty())
+                throw new HttpResponseException("Book with isbn = " + book.getIsbn() + " does not exist.",
+                        HttpStatus.NOT_FOUND);
+
+            // Get the book values
+            Book existing = bookExists.get();
+
+            // Check the quantity
+            if(book.getQuantity() > existing.getQuantity()){
+                // Error, add to stringbuilder
+                errorString
+                        .append("Not enough books in stock for: ")
+                        .append(book.getIsbn())
+                        .append("\n");
+            }
+        }
+
+        // Check if all the items are ok
+        if(!errorString.isEmpty())
+            throw new HttpResponseException(errorString.toString(), HttpStatus.CONFLICT);
+
+        // All the items are ok, proceed with update
+        for(BookMinimal book : bookList) {
+
+            // Get the book
+            Optional<Book> toBeUpdatedOptional = bookRepository.findById(book.getIsbn());
+            if (toBeUpdatedOptional.isEmpty())
+                throw new HttpResponseException("Book with isbn = " + book.getIsbn() + " does not exist.",
+                        HttpStatus.NOT_FOUND);
+
+            // Change quantity
+            Book toBeUpdated = toBeUpdatedOptional.get();
+            toBeUpdated.setQuantity(toBeUpdated.getQuantity() - book.getQuantity());
+
+            // Update
+            Book saved = bookRepository.save(toBeUpdated);
+        }
+        // Return the success of the operation
+        return true;
     }
 
     private void authorReindex(String isbn) {

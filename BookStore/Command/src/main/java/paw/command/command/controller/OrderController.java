@@ -14,6 +14,7 @@ import paw.command.command.services.OrderManagerService;
 import paw.command.command.services.OrderService;
 import paw.command.command.services.RestService;
 
+import javax.websocket.server.PathParam;
 import java.util.Date;
 import java.util.List;
 
@@ -30,8 +31,6 @@ public class OrderController {
     @Autowired
     private OrderManagerService orderManagerService;
 
-    @Autowired
-    private RestService restService;
 
     @GetMapping(path = "")
     public @ResponseBody
@@ -39,10 +38,24 @@ public class OrderController {
             @RequestParam(name = "client_id", required = false) String clientId
     ) {
         try {
+
             if (clientId != null)
                 return ok(orderService.getAllOrdersOfClient(clientId));
 
             return ok(orderService.getAllOrders());
+        }
+        catch (HttpResponseException e){
+            return status(e.getStatus()).body(e.getMessage());
+        }
+    }
+
+    @GetMapping(path = "/{ORDER_ID}")
+    public @ResponseBody
+    ResponseEntity<?> getOrderById(
+            @PathVariable(name = "ORDER_ID") String orderId
+    ) {
+        try {
+            return ok(orderService.getOrderById(orderId));
         }
         catch (HttpResponseException e){
             return status(e.getStatus()).body(e.getMessage());
@@ -68,18 +81,19 @@ public class OrderController {
 
     @DeleteMapping(path = "/{ORDER_ID}")
     public @ResponseBody
-    ResponseEntity<Order> deleteOrder(
+    ResponseEntity<?> deleteOrder(
             @RequestParam String clientId,
             @PathVariable("ORDER_ID") String orderId
     ) {
 
-        Order order = orderService.deleteOrderFromClient(orderId, clientId);
-
-        if (order != null)
-            return ResponseEntity.status(HttpStatus.CREATED).body(order);
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
+        try {
+            Order order = orderService.deleteOrderFromClient(orderId, clientId);
+            return status(HttpStatus.OK).body(order);
+        }catch(HttpResponseException e){
+            return status(e.getStatus()).body(e.getMessage());
+        }
     }
+
 //
 //    @PatchMapping(path = "{ORDER_ID}")
 //    public @ResponseBody
