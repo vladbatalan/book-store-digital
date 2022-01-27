@@ -1,14 +1,13 @@
 package pos.book.controller;
 
-import net.minidev.json.parser.ParseException;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import pos.book.model.pojo.dto.BookMinimal;
 import pos.book.model.pojo.dto.BookNoVerbose;
+import pos.book.model.pojo.dto.OrderRequest;
 import pos.book.model.pojo.erd.Author;
 import pos.book.model.pojo.erd.Book;
 import pos.book.model.pojo.erd.BookAuthor;
@@ -241,7 +240,8 @@ public class BookController {
 
     /**
      * Method responsible for adding a new author to book
-     * @param isbn The id of the book
+     *
+     * @param isbn     The id of the book
      * @param idAuthor The id of the author
      * @return A book with all it's authors or an error message
      */
@@ -250,7 +250,7 @@ public class BookController {
     ResponseEntity<?> addAuthorToBook(
             @PathVariable("ISBN") String isbn,
             @PathVariable("ID") Integer idAuthor
-    ){
+    ) {
         try {
             bookService.addAuthor(isbn, idAuthor);
             List<Author> authors = bookService.getBookAuthors(isbn).stream()
@@ -274,7 +274,8 @@ public class BookController {
 
     /**
      * Method responsible for deleting an author of a book
-     * @param isbn The id of the book
+     *
+     * @param isbn     The id of the book
      * @param idAuthor The id of the author
      * @return The list of the remaining authors of the book or an error message
      */
@@ -306,6 +307,7 @@ public class BookController {
 
     /**
      * Method responsible for deleting all authors of a book
+     *
      * @param isbn The id of the book
      * @return The book deleted
      */
@@ -327,10 +329,10 @@ public class BookController {
     @PostMapping(path = "/validate")
     public @ResponseBody
     ResponseEntity<?> validateAndUpdateBooks(
-            @RequestBody List<BookMinimal> bookList
-    ){
-        try{
-            bookService.validateBooksAndUpdateQuantity(bookList);
+            @RequestBody OrderRequest bookList
+    ) {
+        try {
+            bookService.validateBooksAndUpdateQuantity(bookList.getItems());
             return ok(bookList);
         } catch (HttpResponseException e) {
             return status(e.getStatus()).body(e.getMessage());

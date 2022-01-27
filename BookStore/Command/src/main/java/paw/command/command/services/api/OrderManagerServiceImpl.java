@@ -95,7 +95,7 @@ public class OrderManagerServiceImpl implements OrderManagerService {
             throw new HttpResponseException("The order must have \"initializata\" status.", HttpStatus.CONFLICT);
 
         // Validate the items
-        restService.validateItemsOfCommand(order.getItems());
+        restService.validateItemsOfCommand(new OrderRequest(order.getItems()));
 
         // If the update was successful, change the state of the command
         order.setStatus("activa");

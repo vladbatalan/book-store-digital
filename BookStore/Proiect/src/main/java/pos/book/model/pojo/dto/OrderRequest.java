@@ -1,4 +1,4 @@
-package paw.command.command.model.pojo.dto;
+package pos.book.model.pojo.dto;
 
 
 import lombok.Data;

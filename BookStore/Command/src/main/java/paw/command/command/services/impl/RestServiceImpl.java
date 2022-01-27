@@ -9,7 +9,9 @@ import org.springframework.web.reactive.function.client.WebClientResponseExcepti
 import paw.command.command.model.exception.HttpResponseException;
 import paw.command.command.model.pojo.dto.Book;
 import paw.command.command.model.pojo.dto.BookMinimal;
+import paw.command.command.model.pojo.dto.OrderRequest;
 import paw.command.command.services.RestService;
+import reactor.core.publisher.Mono;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -43,25 +45,22 @@ public class RestServiceImpl implements RestService {
     }
 
     @Override
-    public List<BookMinimal> validateItemsOfCommand(List<BookMinimal> list) {
+    public OrderRequest validateItemsOfCommand(OrderRequest list) {
         // Create url for get action
-        String url = abcServiceUrl + "/validate";
+        String url = abcServiceUrl + "/books/validate";
 
         try {
             // Create the web client
             String bookExists = webClientBuilder.build()
                     .post()
                     .uri(url)
-                    .body(list, List.class)
+                    .body(Mono.just(list), OrderRequest.class)
                     .retrieve()
                     .bodyToMono(String.class)
                     .block();
-            List<?> genericList = objectMapper.readValue(bookExists, List.class);
 
-            return genericList.stream().map(it -> (BookMinimal)it).collect(Collectors.toList());
+            return objectMapper.readValue(bookExists, OrderRequest.class);
         } catch (WebClientResponseException e){
-            if(e.getStatusCode().equals(HttpStatus.NOT_FOUND))
-                return null;
             throw new HttpResponseException(e.getMessage(),
                     e.getStatusCode());
         } catch (JsonProcessingException e) {

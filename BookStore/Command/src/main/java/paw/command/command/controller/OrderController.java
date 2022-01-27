@@ -7,16 +7,9 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import paw.command.command.model.exception.HttpResponseException;
 import paw.command.command.model.pojo.dto.OrderRequest;
-import paw.command.command.model.pojo.dto.BookMinimal;
-import paw.command.command.model.pojo.erd.Helper;
 import paw.command.command.model.pojo.erd.Order;
 import paw.command.command.services.OrderManagerService;
 import paw.command.command.services.OrderService;
-import paw.command.command.services.RestService;
-
-import javax.websocket.server.PathParam;
-import java.util.Date;
-import java.util.List;
 
 import static org.springframework.http.ResponseEntity.ok;
 import static org.springframework.http.ResponseEntity.status;
@@ -43,8 +36,7 @@ public class OrderController {
                 return ok(orderService.getAllOrdersOfClient(clientId));
 
             return ok(orderService.getAllOrders());
-        }
-        catch (HttpResponseException e){
+        } catch (HttpResponseException e) {
             return status(e.getStatus()).body(e.getMessage());
         }
     }
@@ -56,8 +48,7 @@ public class OrderController {
     ) {
         try {
             return ok(orderService.getOrderById(orderId));
-        }
-        catch (HttpResponseException e){
+        } catch (HttpResponseException e) {
             return status(e.getStatus()).body(e.getMessage());
         }
     }
@@ -73,8 +64,7 @@ public class OrderController {
             Order result = orderManagerService.addOrderToClient(clientId, orderRequest);
 
             return ResponseEntity.status(HttpStatus.CREATED).body(result);
-        }
-        catch (HttpResponseException e){
+        } catch (HttpResponseException e) {
             return status(e.getStatus()).body(e.getMessage());
         }
     }
@@ -89,10 +79,43 @@ public class OrderController {
         try {
             Order order = orderService.deleteOrderFromClient(orderId, clientId);
             return status(HttpStatus.OK).body(order);
+        } catch (HttpResponseException e) {
+            return status(e.getStatus()).body(e.getMessage());
+        }
+    }
+
+    @PostMapping(path = "/{ORDER_ID}/place-order")
+    public @ResponseBody
+    ResponseEntity<?> placeOrder(
+            @RequestParam String clientId,
+            @PathVariable("ORDER_ID") String orderId
+    ) {
+
+        try {
+            Order order = orderManagerService.activeOrderToClient(clientId, orderId);
+            return status(HttpStatus.OK).body(order);
+        } catch (HttpResponseException e) {
+            return status(e.getStatus()).body(e.getMessage());
+        }
+    }
+
+    @PutMapping(path = "")
+    public @ResponseBody
+    ResponseEntity<?> updateOrder(
+            @RequestBody Order order,
+            @RequestParam(name = "clientId", required = false) String clientId
+    ){
+
+        try {
+            // Add the date to database
+            Order result = orderService.updateOrder(order, clientId);
+
+            return ResponseEntity.status(HttpStatus.CREATED).body(result);
         }catch(HttpResponseException e){
             return status(e.getStatus()).body(e.getMessage());
         }
     }
+
 
 //
 //    @PatchMapping(path = "{ORDER_ID}")
@@ -123,14 +146,5 @@ public class OrderController {
 //    }
 //
 //
-//    @PutMapping(path = "")
-//    public @ResponseBody
-//    ResponseEntity<Order> updateOrder(@RequestBody Order order){
-//
-//        // Add the date to database
-//        Order result = orderService.updateOrder(order);
-//
-//        return ResponseEntity.status(HttpStatus.CREATED).body(result);
-//    }
 
 }
