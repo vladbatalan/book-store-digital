@@ -116,35 +116,4 @@ public class OrderController {
         }
     }
 
-
-//
-//    @PatchMapping(path = "{ORDER_ID}")
-//    public @ResponseBody
-//    ResponseEntity<Order> updateOrderAddBook(
-//            @PathVariable("ORDER_ID") String orderId,
-//            @RequestBody Book book)
-//    {
-//
-//        // Add the date to database
-//        Order result = orderService.updateOrderAddItem(orderId, book);
-//
-//        return ResponseEntity.status(HttpStatus.CREATED).body(result);
-//    }
-//
-//    @PatchMapping(path = "{ORDER_ID}/{ISBN}")
-//    public @ResponseBody
-//    ResponseEntity<Order> updateOrderRemoveBook(
-//            @PathVariable("ORDER_ID") String orderId,
-//            @PathVariable("ISBN") String isbn
-//            )
-//    {
-//
-//        // Add the date to database
-//        Order result = orderService.updateOrderRemoveItem(orderId, isbn);
-//
-//        return ResponseEntity.status(HttpStatus.CREATED).body(result);
-//    }
-//
-//
-
 }

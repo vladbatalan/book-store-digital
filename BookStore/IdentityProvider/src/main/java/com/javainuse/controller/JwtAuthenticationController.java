@@ -17,7 +17,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 
-import com.javainuse.config.JwtTokenUtil;
+import com.javainuse.config.security.JwtTokenUtil;
 import com.javainuse.model.dto.JwtRequest;
 import com.javainuse.model.dto.JwtResponse;
 import com.javainuse.model.dto.UserNoPass;

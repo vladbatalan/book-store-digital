@@ -41,13 +41,16 @@ public class ApiController {
     private final Integer BACKEND_PORT = 4300;
     private final Integer BOOK_COLLECTION_PORT = 8081;
     private final Integer COMMAND_PORT = 8082;
+    private final Integer IDENTITY_PROVIDER_PORT = 8803;
 
     @RequestMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     public @ResponseBody
     ResponseEntity<?> servicesGateway(HttpServletRequest httpServletRequest) throws IOException {
 
         // Extract the uri
-        StringBuilder requestURL = new StringBuilder(httpServletRequest.getRequestURI());
+
+        String requestUri = httpServletRequest.getRequestURI();
+        StringBuilder requestURL = new StringBuilder(requestUri);
         String queryString = httpServletRequest.getQueryString();
 
         if (queryString != null)
@@ -62,12 +65,25 @@ public class ApiController {
             headerInfo.put(key, value);
         }
 
+        // Set the url to access
+        Integer backendPort = null;
+        System.out.println(requestUri);
+        if(requestUri.startsWith("/api/bookcollection"))
+            backendPort = BOOK_COLLECTION_PORT;
+        if(requestUri.startsWith("/api/orders"))
+            backendPort = COMMAND_PORT;
+        if(requestUri.startsWith("/api/identity-provider"))
+            backendPort = IDENTITY_PROVIDER_PORT;
+
+        if(backendPort == null)
+            throw new HttpResponseException("Service not found", HttpStatus.NOT_FOUND.value());
+
         // Get the body of the request
         String body = httpServletRequest.getReader().lines().collect(Collectors.joining(System.lineSeparator()));
 
         WebClient.RequestHeadersSpec<?> preHeaders = webClientBuilder.build()
                 .method(HttpMethod.valueOf(httpServletRequest.getMethod()))
-                .uri(String.format("http://localhost:%d/%s", BACKEND_PORT, requestURL))
+                .uri(String.format("http://localhost:%d/%s", backendPort, requestURL))
                 .contentType(MediaType.APPLICATION_JSON)
                 .accept(MediaType.APPLICATION_JSON)
                 .body(Mono.just(body), String.class);

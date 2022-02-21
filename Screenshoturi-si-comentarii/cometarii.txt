@@ -1,0 +1,8 @@
+Serviciu SOAP:
+	- Identity Provider functioneaza cu JWT, dar nu poate sa foloseasca SOAP din cauza 
+barierilor puse de WebSecurity
+	- In schimb, SoapRevansa expune un endpoint care face validarea unui Token
+
+BookCollection este dat de proiectul "Proiect"
+FrontendServer este un Gateway ce poate fi folosit ca intermediar intre Client si
+	celelalte Servicii.
